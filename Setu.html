@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Setu — Criminal Network Analysis (Prototype)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root{
+    --ink:#12161F;
+    --navy:#161B27;
+    --navy-2:#1E2536;
+    --paper:#F4F2EC;
+    --paper-2:#EAE7DD;
+    --line:#D9D5C8;
+    --amber:#B8874B;
+    --amber-soft:#EADFC6;
+    --teal:#4C8A82;
+    --red:#B8503F;
+    --green:#5C8A5C;
+    --muted:#6E7280;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--paper);
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+  }
+  button{font-family:inherit; cursor:pointer;}
+
+  /* ---------- LOGIN ---------- */
+  #login-screen{
+    height:100vh; display:flex; align-items:center; justify-content:center;
+    background:var(--navy);
+  }
+  .login-card{
+    width:760px; max-width:92vw; display:flex; background:#fff; border-radius:8px; overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,0.35);
+  }
+  .login-side{
+    width:42%; background:linear-gradient(165deg,var(--navy),#0d1018);
+    color:#EDEBE3; padding:36px 26px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+  }
+  .badge{
+    width:56px;height:56px;border-radius:50%;
+    background:linear-gradient(155deg,var(--amber),#8f6431);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Source Serif 4',serif; font-weight:700; font-size:22px; color:#1a1408;
+    margin-bottom:14px;
+  }
+  .login-side .name{font-family:'Source Serif 4',serif; font-size:20px; margin-bottom:6px;}
+  .login-side .tag{font-size:11px; color:#B7B2A0; letter-spacing:0.4px;}
+  .login-form{flex:1; padding:44px 40px; display:flex; flex-direction:column; justify-content:center;}
+  .login-form h3{font-family:'Source Serif 4',serif; font-size:22px; margin:0 0 4px;}
+  .login-form .sub{font-size:13px; color:var(--muted); margin-bottom:22px;}
+  .field-label{font-size:11px; color:var(--muted); margin-bottom:4px; display:block;}
+  .field{
+    width:100%; border:1px solid var(--line); border-radius:5px; padding:10px 11px;
+    font-size:13px; margin-bottom:14px; font-family:inherit;
+  }
+  select.field{background:#fff;}
+  .btn{
+    background:var(--navy); color:#fff; border:none; border-radius:5px;
+    padding:11px; font-size:13.5px; font-weight:600; text-align:center;
+  }
+  .btn:hover{background:#232b3e;}
+  .hint{font-size:11px; color:var(--muted); margin-top:10px; text-align:center;}
+
+  /* ---------- APP SHELL ---------- */
+  #app-screen{display:none; height:100vh;}
+  .shell{display:flex; height:100%;}
+  .nav{
+    width:210px; background:var(--navy); color:#D8D5CA; display:flex; flex-direction:column; flex-shrink:0;
+  }
+  .nav .brand{padding:20px 18px 14px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #2A3244;}
+  .nav .brand .badge{width:30px;height:30px;font-size:13px;margin:0;}
+  .nav .brand .bname{font-family:'Source Serif 4',serif; font-size:15px; color:#fff;}
+  .nav .items{padding:14px 10px; flex:1;}
+  .navitem{
+    display:flex; align-items:center; gap:9px; padding:10px 12px; border-radius:5px; font-size:13px;
+    margin-bottom:2px; color:#B9B6AC;
+  }
+  .navitem .dot{width:6px;height:6px;border-radius:50%;background:#4A5268;}
+  .navitem.active{background:#242C3F; color:#fff;}
+  .navitem.active .dot{background:var(--amber);}
+  .navitem:hover:not(.active):not(.disabled){background:#1E2536; cursor:pointer;}
+  .navitem.disabled{color:#565C6C; cursor:not-allowed;}
+  .navitem.disabled .dot{background:#3A4258;}
+  .navitem .lock{margin-left:auto; font-size:9px; opacity:0.8;}
+  .nav .divider{height:1px; background:#2A3244; margin:8px 12px;}
+  .nav .foot{padding:14px 18px; font-size:11px; color:#7C7A70; border-top:1px solid #2A3244;}
+  .logout-btn{
+    margin-top:10px; width:100%; text-align:center; background:transparent;
+    border:1px solid #3A4258; color:#C9C6BA; border-radius:5px; padding:7px; font-size:11.5px;
+  }
+  .logout-btn:hover{background:#242C3F; color:#fff;}
+
+  /* Access denied */
+  .access-denied{border:1px solid var(--line); border-radius:6px; background:#fff; padding:40px 30px; text-align:center;}
+  .access-denied .ic{font-size:26px; margin-bottom:10px;}
+  .access-denied h4{font-family:'Source Serif 4',serif; font-size:16px; margin:0 0 6px;}
+  .access-denied p{font-size:12.5px; color:var(--muted); max-width:360px; margin:0 auto;}
+
+  /* Data ingestion form */
+  .ingest-form{display:grid; grid-template-columns:1fr 1fr; gap:12px 16px;}
+  .ingest-form .full{grid-column:1 / -1;}
+  .ingest-form label{font-size:11px; color:var(--muted); margin-bottom:4px; display:block;}
+  .ingest-form input, .ingest-form select, .ingest-form textarea{
+    width:100%; border:1px solid var(--line); border-radius:5px; padding:9px 10px;
+    font-size:12.5px; font-family:inherit; background:#fff;
+  }
+  .ingest-form textarea{resize:vertical; min-height:56px;}
+  .ingest-actions{display:flex; gap:10px; margin-top:16px;}
+  .ingest-actions .btn{flex:0 0 auto; padding:9px 18px; font-size:12.5px;}
+  .btn.ghost{background:#fff; color:var(--ink); border:1px solid var(--line);}
+  .btn.ghost:hover{background:var(--paper-2);}
+  .save-toast{font-size:11.5px; color:var(--green); margin-left:4px; display:none;}
+  .save-toast.show{display:inline;}
+  .rowactions{display:flex; gap:10px;}
+  .rowactions span{font-size:11px; color:var(--teal); cursor:pointer;}
+  .rowactions span.del{color:var(--red);}
+  .rowactions span:hover{text-decoration:underline;}
+
+  .main{flex:1; overflow-y:auto; padding:26px 34px;}
+  .pagehead{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:18px;}
+  .pagehead h2{font-family:'Source Serif 4',serif; font-size:24px; margin:0;}
+  .pagehead .sub{font-size:12.5px; color:var(--muted); margin-top:3px;}
+  .role-pill{font-size:11px; background:var(--amber-soft); color:#6b4b1f; padding:4px 10px; border-radius:10px;}
+
+  /* Dashboard */
+  .stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px;}
+  .stat{border:1px solid var(--line); border-radius:6px; padding:14px 16px; background:#fff;}
+  .stat .n{font-size:24px; font-weight:700;}
+  .stat .l{font-size:11px; color:var(--muted); margin-top:3px;}
+  .stat.warn .n{color:var(--red);}
+  .stat.ok .n{color:var(--green);}
+  .card{border:1px solid var(--line); border-radius:6px; background:#fff; padding:16px 18px; margin-bottom:16px;}
+  .card h4{font-family:'Source Serif 4',serif; font-size:15px; margin:0 0 12px;}
+  table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  th{text-align:left; color:var(--muted); font-weight:500; padding:6px 8px; border-bottom:1px solid var(--line);}
+  td{padding:8px 8px; border-bottom:1px solid #EFEDE5;}
+  tr.clickable:hover{background:#FAF8F2; cursor:pointer;}
+  .sev{padding:2px 8px; border-radius:9px; font-size:10.5px;}
+  .sev.high{background:#F3DAD3; color:var(--red);}
+  .sev.med{background:#F1E4C7; color:#8a651f;}
+  .sev.low{background:#DCEAE7; color:#2c5c54;}
+
+  /* Search */
+  .searchbar{
+    width:100%; border:1px solid var(--line); border-radius:6px; padding:11px 14px;
+    font-size:13.5px; margin-bottom:16px; background:#fff;
+  }
+  .results{display:grid; gap:10px;}
+  .result-row{
+    border:1px solid var(--line); border-radius:6px; background:#fff; padding:12px 14px;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .result-row:hover{border-color:var(--amber); cursor:pointer;}
+  .result-row .rn{font-weight:600; font-size:13px;}
+  .result-row .ra{font-size:11px; color:var(--muted); margin-top:2px;}
+  .cbadge{font-size:10px; padding:2px 8px; border-radius:8px; background:#DCEAE7; color:#2c5c54;}
+
+  .profile-card{border:1px solid var(--line); border-radius:6px; background:#fff; padding:18px 20px;}
+  .pname{font-weight:700; font-size:17px; font-family:'Source Serif 4',serif;}
+  .alias-row{display:flex; gap:6px; flex-wrap:wrap; margin:10px 0;}
+  .alias{font-size:10.5px; background:var(--paper-2); border:1px solid var(--line); padding:3px 9px; border-radius:9px;}
+  .conf-bar{height:6px; border-radius:3px; background:var(--paper-2); margin:4px 0 14px; overflow:hidden; max-width:260px;}
+  .conf-bar i{display:block; height:100%; background:var(--teal);}
+  .attr{display:flex; justify-content:space-between; font-size:12px; padding:7px 0; border-top:1px solid #EFEDE5;}
+  .attr .v{color:var(--muted);}
+  .backlink{font-size:12px; color:var(--muted); margin-bottom:14px; display:inline-block;}
+  .backlink:hover{color:var(--ink); cursor:pointer;}
+
+  /* Profile — expandable sections */
+  .section-head{display:flex; justify-content:space-between; align-items:center; padding:11px 2px; border-top:1px solid #EFEDE5; cursor:pointer; user-select:none;}
+  .section-head:hover .sh-label{color:var(--amber);}
+  .sh-label{font-size:12.5px; font-weight:600;}
+  .sh-right{display:flex; align-items:center; gap:8px; color:var(--muted); font-size:12px;}
+  .chev{display:inline-block; transition:transform .15s; font-size:10px;}
+  .chev.open{transform:rotate(90deg);}
+  .section-body{display:none; padding:2px 2px 14px;}
+  .section-body.open{display:block;}
+  .doc-item{border:1px solid var(--line); border-radius:5px; padding:10px 12px; margin-bottom:8px; background:#FAF8F2;}
+  .doc-item .dh{display:flex; justify-content:space-between; font-size:10.5px; color:var(--muted); margin-bottom:5px;}
+  .doc-item .dh .did{color:var(--ink); font-weight:600;}
+  .doc-item .dx{font-size:12px; line-height:1.45;}
+  .rel-item{border:1px solid var(--line); border-radius:5px; padding:10px 12px; margin-bottom:8px;}
+  .rel-item.unresolved{opacity:0.7;}
+  .rel-top{display:flex; justify-content:space-between; align-items:center;}
+  .rel-name{font-size:12.5px; font-weight:600;}
+  .rel-type{font-size:10.5px; color:var(--muted); margin-top:2px;}
+  .rel-actions{display:flex; gap:12px; align-items:center;}
+  .linkbtn{font-size:11px; color:var(--teal); cursor:pointer;}
+  .linkbtn:hover{text-decoration:underline;}
+  .ev-badge{font-size:10px; padding:2px 7px; border-radius:8px; background:var(--amber-soft); color:#6b4b1f;}
+  .ev-badge.none{background:var(--paper-2); color:var(--muted);}
+  .rel-evidence{margin-top:8px; padding-top:8px; border-top:1px dashed var(--line);}
+  .more-note{font-size:11px; color:var(--muted); padding-top:4px;}
+
+  /* Graph */
+  .graphwrap{display:flex; gap:16px; height:520px;}
+  .graphpane{flex:1; background:#0F141F; border-radius:6px; position:relative; overflow:hidden;}
+  .graphpane svg{width:100%; height:100%;}
+  .gnode{cursor:pointer;}
+  .gnode circle{transition:r .15s;}
+  .gnode:hover circle{r:11;}
+  .gnode.selected circle{stroke:#fff; stroke-width:2px;}
+  .glabel{fill:#C9C6BA; font-size:9px; font-family:Inter; pointer-events:none;}
+  .evpane{width:320px; flex-shrink:0; border:1px solid var(--line); border-radius:6px; background:#fff; padding:14px; overflow-y:auto;}
+  .evpane h4{font-size:13px; margin:0 0 10px; font-family:'Source Serif 4',serif;}
+  .evsrc{border:1px solid var(--line); border-radius:5px; padding:9px 10px; margin-bottom:9px;}
+  .evsrc .doc{font-size:10px; color:var(--muted); margin-bottom:4px; display:flex; justify-content:space-between;}
+  .evsrc .excerpt{font-size:11.5px; line-height:1.45;}
+  .hl{background:var(--amber-soft);}
+  .empty-ev{font-size:12px; color:var(--muted); text-align:center; padding:40px 10px;}
+  .legend{display:flex; gap:14px; font-size:10.5px; color:#B9B6AC; margin-top:10px;}
+  .legend span{display:inline-flex; align-items:center; gap:5px;}
+  .legend i{width:8px;height:8px;border-radius:50%; display:inline-block;}
+
+  /* Alerts */
+  .alert-card{border:1px solid var(--line); border-radius:6px; background:#fff; padding:16px 18px; margin-bottom:14px;}
+  .alert-card.resolved{opacity:0.5;}
+  .kind{font-size:10.5px; color:var(--red); font-weight:700; letter-spacing:0.2px;}
+  .alert-card p{font-size:12.5px; line-height:1.55; margin:8px 0 12px;}
+  .chips{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;}
+  .chip{font-size:10px; border:1px solid var(--line); border-radius:8px; padding:3px 9px; color:var(--muted);}
+  .rowbtns{display:flex; gap:10px;}
+  .rb{flex:1; text-align:center; font-size:12px; padding:9px; border-radius:5px; border:1px solid var(--line); background:#fff;}
+  .rb.accept{background:var(--navy); color:#fff; border-color:var(--navy);}
+  .rb:disabled{opacity:0.45;}
+  .status-tag{font-size:11px; font-weight:600; margin-left:8px;}
+  .status-tag.accepted{color:var(--green);}
+  .status-tag.rejected{color:var(--red);}
+
+  /* Audit */
+  .logrow{display:flex; justify-content:space-between; font-size:12px; padding:9px 0; border-bottom:1px solid #EFEDE5;}
+  .logrow .hash{color:var(--muted); font-variant-numeric:tabular-nums; font-size:10.5px;}
+  .logrow .who{color:var(--muted); font-size:10.5px;}
+
+  /* Cases list + Case detail */
+  .case-row{border:1px solid var(--line); border-radius:6px; background:#fff; padding:13px 16px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;}
+  .case-row:hover{border-color:var(--amber);}
+  .case-row .cn{font-weight:600; font-size:13px;}
+  .case-row .cm{font-size:11px; color:var(--muted); margin-top:3px;}
+  .status-pill{font-size:10.5px; padding:3px 10px; border-radius:9px; background:var(--paper-2); color:var(--muted);}
+  .status-pill.active{background:#F1E4C7; color:#8a651f;}
+  .status-pill.review{background:#DCEAE7; color:#2c5c54;}
+  .case-meta-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px 20px; margin:14px 0 4px;}
+  .case-meta-grid .attr{padding:5px 0;}
+  .role-tag{font-size:10px; padding:2px 8px; border-radius:8px; background:var(--amber-soft); color:#6b4b1f;}
+  .role-tag.victim{background:#DCEAE7; color:#2c5c54;}
+  .role-tag.witness{background:#E4E2F0; color:#4b3f7a;}
+  .disclaimer{font-size:11px; color:var(--muted); font-style:italic; margin:10px 0 4px; padding:9px 11px; background:var(--paper-2); border-radius:5px;}
+
+  /* Timeline */
+  .tl-controls{display:flex; gap:14px; align-items:center; margin-bottom:18px; flex-wrap:wrap;}
+  .tl-controls label{font-size:11px; color:var(--muted);}
+  .tl-controls input[type=range]{width:220px;}
+  .tl-track{position:relative; border-left:2px solid var(--line); margin-left:8px; padding-left:20px;}
+  .tl-event{position:relative; padding-bottom:20px;}
+  .tl-event::before{content:''; position:absolute; left:-25px; top:3px; width:9px; height:9px; border-radius:50%; background:var(--amber); border:2px solid #fff; box-shadow:0 0 0 1px var(--line);}
+  .tl-date{font-size:10.5px; color:var(--muted); font-variant-numeric:tabular-nums;}
+  .tl-title{font-size:12.5px; font-weight:600; margin:2px 0 3px;}
+  .tl-desc{font-size:12px; color:var(--muted); line-height:1.5;}
+  .tl-dimmed{opacity:0.3;}
+
+  /* Graph filter bar */
+  .filter-bar{display:flex; gap:16px; align-items:center; margin-bottom:12px; flex-wrap:wrap; font-size:11.5px; color:var(--muted);}
+  .filter-bar select, .filter-bar input[type=date]{border:1px solid var(--line); border-radius:5px; padding:5px 8px; font-size:11.5px; font-family:inherit; background:#fff;}
+  .filter-bar label{display:flex; align-items:center; gap:5px;}
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-side">
+      <div class="badge">S</div>
+      <div class="name">Setu</div>
+      <div class="tag">CRIMINAL NETWORK ANALYSIS</div>
+    </div>
+    <div class="login-form">
+      <h3>Welcome back</h3>
+      <div class="sub">Sign in to your assigned cases</div>
+      <label class="field-label">Investigator ID</label>
+      <input class="field" id="login-id" placeholder="e.g. INV-0042" value="INV-0042" />
+      <label class="field-label">Password</label>
+      <input class="field" type="password" id="login-pass" value="••••••••" onkeydown="if(event.key==='Enter') login()" />
+      <label class="field-label">Role</label>
+      <select class="field" id="role-select">
+        <option>Investigator</option>
+        <option>Supervisor</option>
+      </select>
+      <button class="btn" onclick="login()">Sign in</button>
+      <div class="hint" id="login-hint">Demo build — any credentials work</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div id="app-screen">
+  <div class="shell">
+    <div class="nav">
+      <div class="brand"><div class="badge">S</div><div class="bname">Setu</div></div>
+      <div class="items" id="nav-items"></div>
+      <div class="foot" id="nav-role"></div>
+    </div>
+    <div class="main" id="main"></div>
+  </div>
+</div>
+
+<script>
+/* ---------------- DATA ---------------- */
+const state = {
+  role: 'Investigator',
+  userId: 'INV-0042',
+  view: 'dashboard',
+  selectedEntity: null,
+  selectedGraphNode: null,
+  selectedCase: null,
+  auditSeq: 1000,
+};
+
+function showCase(id){
+  state.selectedCase = id;
+  logAudit(`Opened case ${id}`);
+  renderCaseDetail(document.getElementById('main'), id);
+}
+
+const entities = [
+  { id:'E-1042', name:'Mohammed Iqbal', aliases:['Md. Iqbal','इक़बाल','Iqbal K.'], confidence:91,
+    docs:7, rels:12, source:'Mixed (OCR + CDR)' },
+  { id:'E-0817', name:'Ramesh Yadav', aliases:['R. Yadav','Ramu'], confidence:84,
+    docs:4, rels:6, source:'FIR text' },
+  { id:'E-0955', name:'Sana Sheikh', aliases:['Sk. Sana','Sheikh S.'], confidence:77,
+    docs:5, rels:9, source:'Social + Txn' },
+  { id:'E-0410', name:'Vikram Nair', aliases:['V. Nair'], confidence:95,
+    docs:9, rels:14, source:'Structured (CDR/Txn)' },
+];
+
+const graphNodes = [
+  { id:'n1', x:70,  y:90,  r:8, color:'#4C8A82', label:'Ramesh Yadav',   entity:'E-0817' },
+  { id:'n2', x:170, y:55,  r:8, color:'#4C8A82', label:'Vikram Nair',    entity:'E-0410' },
+  { id:'n3', x:250, y:120, r:7, color:'#4C8A82', label:'Contact 3',      entity:null },
+  { id:'n4', x:150, y:170, r:11,color:'#B8874B', label:'Mohammed Iqbal', entity:'E-1042' },
+  { id:'n5', x:70,  y:220, r:8, color:'#4C8A82', label:'Sana Sheikh',    entity:'E-0955' },
+  { id:'n6', x:240, y:230, r:7, color:'#6E7280', label:'Contact 6',      entity:null },
+  { id:'n7', x:200, y:300, r:7, color:'#6E7280', label:'Contact 7',      entity:null },
+  { id:'n8', x:300, y:290, r:7, color:'#6E7280', label:'Contact 8',      entity:null },
+  { id:'n9', x:60,  y:300, r:7, color:'#6E7280', label:'Contact 9',      entity:null },
+];
+const graphEdges = [
+  ['n1','n2'], ['n1','n5'], ['n2','n3'], ['n2','n4'],
+  ['n4','n5'], ['n4','n6'], ['n6','n7'], ['n6','n8'], ['n5','n9'],
+];
+
+const evidenceByNode = {
+  n2n4: [
+    { doc:'FIR-2091 · offset 120–160', conf:'0.81', text:'"...seen meeting <span class=\"hl\">Iqbal</span> near the depot along with..."' },
+    { doc:'CDR-5521 · 3 calls, 14 Aug', conf:'0.93', text:'Structured record: 2 numbers, 3 calls, avg 4m12s.' }
+  ],
+  n4n5: [
+    { doc:'Social-post-771', conf:'0.62', text:'"...tagged together at [location] event, caption mentions both names..."' },
+    { doc:'Txn-3390', conf:'0.88', text:'₹12,400 transferred, same-day round trip pattern.' }
+  ],
+};
+
+const entityNodeMap = { 'E-1042':'n4', 'E-0817':'n1', 'E-0955':'n5', 'E-0410':'n2' };
+
+const entityDocs = {
+  'E-1042': [
+    { id:'FIR-2091', type:'FIR (OCR text)', date:'12 Aug', excerpt:'Witness statement places subject near the depot in the company of an associate.' },
+    { id:'CDR-5521', type:'Call Detail Record', date:'14 Aug', excerpt:'3 calls logged with associate number, avg. duration 4m12s.' },
+    { id:'Social-post-771', type:'Social media capture', date:'02 Aug', excerpt:'Tagged at a public event alongside another tracked entity.' },
+    { id:'Txn-3390', type:'Financial transaction', date:'18 Aug', excerpt:'₹12,400 transferred in a same-day round-trip pattern.' },
+  ],
+  'E-0817': [
+    { id:'FIR-2091', type:'FIR (OCR text)', date:'12 Aug', excerpt:'Named as a secondary witness in the same filing as E-1042.' },
+    { id:'CDR-5518', type:'Call Detail Record', date:'09 Aug', excerpt:'2 calls to an unresolved contact number, both under 1 minute.' },
+  ],
+  'E-0955': [
+    { id:'Social-post-771', type:'Social media capture', date:'02 Aug', excerpt:'Tagged together with E-1042 at a public event.' },
+    { id:'Txn-3390', type:'Financial transaction', date:'18 Aug', excerpt:'Recipient side of a same-day round-trip transfer.' },
+    { id:'Case-0077', type:'Cross-case reference', date:'22 Jun', excerpt:'Alias resolved in an earlier, separate case filing.' },
+  ],
+  'E-0410': [
+    { id:'CDR-5521', type:'Call Detail Record', date:'14 Aug', excerpt:'Originating number in the 3-call cluster with E-1042.' },
+    { id:'Txn-3391', type:'Financial transaction', date:'18 Aug', excerpt:'Second hop in a 4-step transaction chain.' },
+    { id:'Txn-3392', type:'Financial transaction', date:'19 Aug', excerpt:'Chain returns to originating account within 48 hours.' },
+  ],
+};
+
+const entityRels = {
+  'E-1042': [
+    { label:'Vikram Nair', targetId:'E-0410', type:'Associate', edgeKey:'n2n4' },
+    { label:'Sana Sheikh', targetId:'E-0955', type:'Associate', edgeKey:'n4n5' },
+    { label:'Contact 6', targetId:null, type:'Contact (unresolved)', edgeKey:null },
+  ],
+  'E-0817': [
+    { label:'Vikram Nair', targetId:'E-0410', type:'Contact', edgeKey:null },
+    { label:'Sana Sheikh', targetId:'E-0955', type:'Contact', edgeKey:null },
+  ],
+  'E-0955': [
+    { label:'Mohammed Iqbal', targetId:'E-1042', type:'Associate', edgeKey:'n4n5' },
+    { label:'Ramesh Yadav', targetId:'E-0817', type:'Contact', edgeKey:null },
+    { label:'Contact 9', targetId:null, type:'Contact (unresolved)', edgeKey:null },
+  ],
+  'E-0410': [
+    { label:'Mohammed Iqbal', targetId:'E-1042', type:'Associate', edgeKey:'n2n4' },
+    { label:'Ramesh Yadav', targetId:'E-0817', type:'Contact', edgeKey:null },
+    { label:'Contact 3', targetId:null, type:'Contact (unresolved)', edgeKey:null },
+  ],
+};
+
+let alerts = [
+  { id:'a1', kind:'NEW BRIDGE NODE', entity:'E-1042', conf:0.78, status:null,
+    text:'Entity E-1042 (Mohammed Iqbal) newly connects Community A (5 members) and Community B (7 members) via 2 calls and 1 shared address, within a 10-day window.',
+    chips:['FIR-2091','CDR-5521','conf. 0.78'] },
+  { id:'a2', kind:'ALIAS REUSE ACROSS CASES', entity:'E-0955', conf:0.64, status:null,
+    text:'Entity E-0955 (Sana Sheikh) appears under a resolved alias in Case #0091 and Case #0077, filed 40 days apart.',
+    chips:['Case-0091','Case-0077','conf. 0.64'] },
+  { id:'a3', kind:'CIRCULAR TRANSACTION CHAIN', entity:'E-0410', conf:0.82, status:null,
+    text:'A 4-hop transaction chain returns to the originating account (E-0410) within 48 hours — a classic layering pattern.',
+    chips:['Txn-3390','Txn-3391','Txn-3392','conf. 0.82'] },
+];
+
+let auditLog = [
+  { text:'Case #0091 opened', who:'System' },
+  { text:'Investigator viewed E-1042 profile', who:'INV-0042' },
+  { text:'Merge accepted — Iqbal aliases (0.91)', who:'INV-0042' },
+];
+
+/* ---------------- CASES ---------------- */
+const cases = [
+  {
+    id:'CASE-0091', fir:'FIR-2091', station:'Central Zone PS', date:'2026-08-12',
+    sections:'IPC 120B, 420, 384', status:'active',
+    summary:'Suspected coordination between two previously unconnected groups, surfaced via a shared-address match and a burst of calls in mid-August. Bridge-node alert on Mohammed Iqbal accepted for follow-up.',
+    nodeIds:['n1','n2','n3','n4','n5','n6'],
+    people:[
+      { entityId:'E-1042', role:'subject of interest' },
+      { entityId:'E-0410', role:'associate' },
+      { entityId:'E-0817', role:'witness' },
+      { entityId:'E-0955', role:'associate' },
+    ],
+    docIds:['FIR-2091','CDR-5521','Social-post-771','Txn-3390'],
+  },
+  {
+    id:'CASE-0077', fir:'FIR-0077', station:'Lakeview PS', date:'2026-06-22',
+    sections:'IPC 406, 468', status:'review',
+    summary:'Earlier filing in which E-0955 was resolved under a different alias. Kept open for cross-case alias verification; feeds the alias-reuse alert.',
+    nodeIds:['n5','n9'],
+    people:[
+      { entityId:'E-0955', role:'subject of interest' },
+    ],
+    docIds:['Case-0077'],
+  },
+];
+const entityCases = {}; // entityId -> [{caseId, role}]
+cases.forEach(c => c.people.forEach(p => {
+  (entityCases[p.entityId] ||= []).push({ caseId:c.id, role:p.role });
+}));
+function caseById(id){ return cases.find(c=>c.id===id); }
+
+/* ---------------- TIMELINE ---------------- */
+const timelineEvents = [
+  { date:'2026-08-02', title:'Social media capture — Social-post-771', desc:'E-1042 and E-0955 tagged together at a public event.', caseId:'CASE-0091', entityId:'E-1042' },
+  { date:'2026-08-09', title:'CDR-5518 logged', desc:'2 short calls from E-0817 to an unresolved contact.', caseId:'CASE-0091', entityId:'E-0817' },
+  { date:'2026-08-12', title:'FIR-2091 filed', desc:'Witness statement places E-1042 near the depot with an associate.', caseId:'CASE-0091', entityId:'E-1042' },
+  { date:'2026-08-14', title:'CDR-5521 — 3-call cluster', desc:'E-1042 and E-0410 exchange 3 calls, avg. 4m12s.', caseId:'CASE-0091', entityId:'E-0410' },
+  { date:'2026-08-18', title:'Txn-3390 / 3391', desc:'₹12,400 round-trip transfer; first hop of a transaction chain.', caseId:'CASE-0091', entityId:'E-0410' },
+  { date:'2026-08-19', title:'Txn-3392 — chain closes', desc:'4-hop transaction chain returns to originating account within 48 hours.', caseId:'CASE-0091', entityId:'E-0410' },
+  { date:'2026-08-21', title:'Bridge-node alert raised', desc:'E-1042 flagged as newly connecting two previously separate communities.', caseId:'CASE-0091', entityId:'E-1042' },
+];
+
+/* ---------------- NAV / ROUTING ---------------- */
+function login(){
+  const idField = document.getElementById('login-id');
+  const id = idField.value.trim();
+  if(!id){
+    idField.style.borderColor = 'var(--red)';
+    document.getElementById('login-hint').textContent = 'Enter an Investigator ID to continue.';
+    document.getElementById('login-hint').style.color = 'var(--red)';
+    idField.focus();
+    return;
+  }
+  state.userId = id;
+  state.role = document.getElementById('role-select').value;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  logAudit('Signed in as ' + state.role);
+  renderShell();
+  goto('dashboard');
+}
+
+function logout(){
+  logAudit('Signed out');
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  // reset the login form so the next person signs in with their own identity
+  document.getElementById('login-id').value = '';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('role-select').value = 'Investigator';
+  const hint = document.getElementById('login-hint');
+  hint.textContent = 'Demo build — any credentials work';
+  hint.style.color = '';
+  document.getElementById('login-id').style.borderColor = '';
+  document.getElementById('login-id').focus();
+}
+
+const NAV = [
+  {id:'dashboard', label:'Dashboard'},
+  {id:'cases',     label:'Cases'},
+  {id:'search',    label:'Entity Search'},
+  {id:'graph',     label:'Network Graph'},
+  {id:'timeline',  label:'Timeline'},
+  {id:'alerts',    label:'Alerts'},
+  {id:'audit',     label:'Case / Audit Log'},
+];
+
+const RESTRICTED_NAV = { id:'ingest', label:'Data Ingestion', icon:'&#9998;' }; // pencil icon — Investigator-only
+
+function renderShell(){
+  const isInvestigator = state.role === 'Investigator';
+  document.getElementById('nav-items').innerHTML = NAV.map(n =>
+    `<div class="navitem ${state.view===n.id?'active':''}" onclick="goto('${n.id}')"><span class="dot"></span>${n.label}</div>`
+  ).join('') + `
+    <div class="divider"></div>
+    <div class="navitem ${state.view==='ingest'?'active':''} ${isInvestigator?'':'disabled'}"
+         onclick="${isInvestigator ? `goto('ingest')` : `denyIngestAccess()`}"
+         title="${isInvestigator ? 'Enter new case data' : 'Investigator access only'}">
+      <span class="dot"></span>${RESTRICTED_NAV.icon} ${RESTRICTED_NAV.label}
+      ${isInvestigator ? '' : '<span class="lock">&#128274;</span>'}
+    </div>
+  `;
+  document.getElementById('nav-role').innerHTML = `
+    Signed in as <b>${state.userId}</b><br>${state.role} · Case #0091
+    <button class="logout-btn" onclick="logout()">Log out</button>
+  `;
+}
+
+function denyIngestAccess(){
+  logAudit('Blocked — attempted Data Ingestion access as ' + state.role);
+  renderIngestDenied(document.getElementById('main'));
+}
+
+function goto(view){
+  state.view = view;
+  renderShell();
+  const main = document.getElementById('main');
+  if(view==='dashboard') renderDashboard(main);
+  if(view==='cases') renderCases(main);
+  if(view==='search') renderSearch(main);
+  if(view==='graph') renderGraph(main);
+  if(view==='timeline') renderTimeline(main);
+  if(view==='alerts') renderAlerts(main);
+  if(view==='audit') renderAudit(main);
+  if(view==='ingest'){
+    if(state.role === 'Investigator') renderIngestion(main);
+    else renderIngestDenied(main); // guard, in case this is ever reached without the nav gate
+  }
+}
+
+function logAudit(text){
+  state.auditSeq++;
+  auditLog.unshift({ text, who: state.userId });
+}
+function hashFor(i){
+  return 'h:' + (state.auditSeq - i).toString(16).padStart(4,'0') + '…';
+}
+
+/* ---------------- DASHBOARD ---------------- */
+function renderDashboard(main){
+  const openAlerts = alerts.filter(a=>!a.status).length;
+  main.innerHTML = `
+    <div class="pagehead">
+      <div><h2>Case Overview</h2><div class="sub">Case #0091 · synthetic demo data</div></div>
+      <div class="role-pill">${state.role}</div>
+    </div>
+    <div class="stat-row">
+      <div class="stat" style="cursor:pointer" onclick="goto('cases')"><div class="n">${cases.length}</div><div class="l">ACTIVE CASES</div></div>
+      <div class="stat ok"><div class="n">214</div><div class="l">ENTITIES RESOLVED</div></div>
+      <div class="stat"><div class="n">18</div><div class="l">PENDING MERGES</div></div>
+      <div class="stat ${openAlerts>0?'warn':'ok'}" style="cursor:pointer" onclick="goto('alerts')"><div class="n">${openAlerts}</div><div class="l">OPEN ALERTS</div></div>
+    </div>
+    <div class="card">
+      <h4>Recent Alerts</h4>
+      <table>
+        <tr><th>Type</th><th>Entity</th><th>Confidence</th><th>Status</th></tr>
+        ${alerts.map(a=>`
+          <tr class="clickable" onclick="goto('alerts')">
+            <td>${a.kind}</td><td>${a.entity}</td>
+            <td><span class="sev ${a.conf>0.75?'high':'med'}">${a.conf.toFixed(2)}</span></td>
+            <td>${a.status ? `<span class="status-tag ${a.status}">${a.status}</span>` : '<span style="color:var(--muted)">pending</span>'}</td>
+          </tr>`).join('')}
+      </table>
+    </div>
+    <div class="card">
+      <h4>Latest Audit Entries</h4>
+      ${auditLog.slice(0,4).map((l,i)=>`<div class="logrow"><span>${l.text}</span><span class="hash">${hashFor(i)}</span></div>`).join('')}
+    </div>
+  `;
+}
+
+/* ---------------- CASES ---------------- */
+function renderCases(main){
+  main.innerHTML = `
+    <div class="pagehead"><div><h2>Cases</h2><div class="sub">Every case links its people, documents, and a subgraph of the wider network</div></div></div>
+    ${cases.map(c=>`
+      <div class="case-row" onclick="showCase('${c.id}')">
+        <div>
+          <div class="cn">${c.id} · ${c.fir} <span style="color:var(--muted); font-weight:400;">— ${c.station}</span></div>
+          <div class="cm">${c.date} · ${c.sections} · ${c.people.length} linked ${c.people.length===1?'person':'people'}</div>
+        </div>
+        <span class="status-pill ${c.status}">${c.status==='active'?'Active':'Under review'}</span>
+      </div>`).join('')}
+  `;
+}
+
+function renderCaseDetail(main, id){
+  const c = caseById(id);
+  if(!c){ renderCases(main); return; }
+  const docs = c.docIds.map(did => {
+    for(const eid in entityDocs){ const d = (entityDocs[eid]||[]).find(x=>x.id===did); if(d) return d; }
+    return null;
+  }).filter(Boolean);
+  const events = timelineEvents.filter(e=>e.caseId===c.id);
+  main.innerHTML = `
+    <span class="backlink" onclick="goto('cases')">&larr; Back to cases</span>
+    <div class="pagehead">
+      <div><h2>${c.id} · ${c.fir}</h2><div class="sub">${c.station}</div></div>
+      <span class="status-pill ${c.status}">${c.status==='active'?'Active':'Under review'}</span>
+    </div>
+
+    <div class="card">
+      <div class="case-meta-grid">
+        <div class="attr"><span>Date filed</span><span class="v">${c.date}</span></div>
+        <div class="attr"><span>Sections</span><span class="v">${c.sections}</span></div>
+        <div class="attr"><span>Police station</span><span class="v">${c.station}</span></div>
+      </div>
+      <div style="font-size:12.5px; color:var(--muted); line-height:1.6; margin-top:8px;">${c.summary}</div>
+      <div class="disclaimer">People below are shown by their role in this filing (subject of interest, associate, witness, victim). No automated determination of guilt is made by this system.</div>
+    </div>
+
+    <div class="card">
+      <h4>Linked people (${c.people.length})</h4>
+      <table>
+        <tr><th>Name</th><th>Role</th><th>Confidence</th><th></th></tr>
+        ${c.people.map(p=>{
+          const e = entities.find(x=>x.id===p.entityId);
+          if(!e) return '';
+          const roleCls = p.role.includes('victim')?'victim':p.role.includes('witness')?'witness':'';
+          return `<tr>
+            <td>${e.name}</td>
+            <td><span class="role-tag ${roleCls}">${p.role}</span></td>
+            <td><span class="sev ${e.confidence>=75?'high':e.confidence>=50?'med':'low'}">${e.confidence}%</span></td>
+            <td class="rowactions"><span onclick="showProfile('${e.id}')">View profile</span></td>
+          </tr>`;
+        }).join('')}
+      </table>
+    </div>
+
+    <div class="card">
+      <h4>Case documents (${docs.length})</h4>
+      ${docs.map(d=>`
+        <div class="doc-item">
+          <div class="dh"><span class="did">${d.id}</span><span>${d.type} · ${d.date}</span></div>
+          <div class="dx">${d.excerpt}</div>
+        </div>`).join('') || '<div class="empty-ev">No sampled documents in this demo build.</div>'}
+    </div>
+
+    <div class="card">
+      <h4>Case timeline</h4>
+      ${events.length ? `<div class="tl-track">${events.map(e=>`
+        <div class="tl-event">
+          <div class="tl-date">${e.date}</div>
+          <div class="tl-title">${e.title}</div>
+          <div class="tl-desc">${e.desc}</div>
+        </div>`).join('')}</div>` : '<div class="empty-ev">No dated events sampled for this case.</div>'}
+      <span class="linkbtn" onclick="goto('timeline')">Open full Timeline view &rarr;</span>
+    </div>
+
+    <div class="card">
+      <h4>Network subgraph — this case</h4>
+      <div class="graphwrap" style="height:340px;">
+        <div class="graphpane"><svg viewBox="0 0 340 340" id="case-graph-svg"></svg></div>
+      </div>
+    </div>
+  `;
+  drawCaseSubgraph(c.nodeIds);
+}
+
+function drawCaseSubgraph(nodeIds){
+  const svg = document.getElementById('case-graph-svg');
+  if(!svg) return;
+  const idSet = new Set(nodeIds);
+  let lines = '';
+  graphEdges.forEach(([a,b])=>{
+    if(!idSet.has(a) || !idSet.has(b)) return;
+    const na = nodeById(a), nb = nodeById(b);
+    const key = a+b, key2 = b+a;
+    const isEvidenced = evidenceByNode[key] || evidenceByNode[key2];
+    lines += `<line x1="${na.x}" y1="${na.y}" x2="${nb.x}" y2="${nb.y}" stroke="${isEvidenced?'#B8874B':'#3A4258'}" stroke-width="${isEvidenced?2:1.3}"/>`;
+  });
+  let nodes = '';
+  graphNodes.filter(n=>idSet.has(n.id)).forEach(n=>{
+    nodes += `<g class="gnode" onclick="showProfile('${n.entity}')" style="cursor:${n.entity?'pointer':'default'}">
+        <circle cx="${n.x}" cy="${n.y}" r="${n.r}" fill="${n.color}"/>
+        <text class="glabel" x="${n.x+12}" y="${n.y+3}">${n.label}</text>
+      </g>`;
+  });
+  svg.innerHTML = lines + nodes;
+}
+
+/* ---------------- TIMELINE ---------------- */
+function renderTimeline(main, minIdx, maxIdx){
+  const sorted = [...timelineEvents].sort((a,b)=>a.date.localeCompare(b.date));
+  const lo = minIdx==null ? 0 : minIdx;
+  const hi = maxIdx==null ? sorted.length-1 : maxIdx;
+  main.innerHTML = `
+    <div class="pagehead"><div><h2>Timeline</h2><div class="sub">Every dated event across cases — narrow the window to see how a network evolved</div></div></div>
+    <div class="tl-controls">
+      <label>From <input id="tl-lo" type="range" min="0" max="${sorted.length-1}" value="${lo}" oninput="syncTimeline()"/> ${sorted[lo].date}</label>
+      <label>To <input id="tl-hi" type="range" min="0" max="${sorted.length-1}" value="${hi}" oninput="syncTimeline()"/> ${sorted[hi].date}</label>
+    </div>
+    <div class="tl-track">
+      ${sorted.map((e,i)=>{
+        const inRange = i>=lo && i<=hi;
+        return `<div class="tl-event ${inRange?'':'tl-dimmed'}">
+          <div class="tl-date">${e.date} · ${e.caseId}</div>
+          <div class="tl-title">${e.title}</div>
+          <div class="tl-desc">${e.desc} <span class="linkbtn" onclick="showProfile('${e.entityId}')">View person</span> · <span class="linkbtn" onclick="showCase('${e.caseId}')">View case</span></div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+function syncTimeline(){
+  let lo = parseInt(document.getElementById('tl-lo').value,10);
+  let hi = parseInt(document.getElementById('tl-hi').value,10);
+  if(lo>hi) [lo,hi] = [hi,lo];
+  renderTimeline(document.getElementById('main'), lo, hi);
+}
+
+/* ---------------- SEARCH ---------------- */
+function renderSearch(main, query=''){
+  const q = query.trim().toLowerCase();
+  const matches = !q ? entities : entities.filter(e =>
+    e.name.toLowerCase().includes(q) || e.aliases.some(a=>a.toLowerCase().includes(q)) || e.id.toLowerCase().includes(q)
+  );
+  main.innerHTML = `
+    <div class="pagehead"><div><h2>Entity Search</h2><div class="sub">Search resolves across name, alias, and transliteration variants</div></div></div>
+    <input class="searchbar" id="searchbox" placeholder="Try: Md. Iqbal, Ramu, Sheikh…" value="${query}" oninput="renderSearch(document.getElementById('main'), this.value)"/>
+    <div class="results">
+      ${matches.map(e=>`
+        <div class="result-row" onclick="showProfile('${e.id}')">
+          <div>
+            <div class="rn">${e.name} <span style="color:var(--muted); font-weight:400;">(${e.id})</span></div>
+            <div class="ra">aka ${e.aliases.join(', ')}</div>
+          </div>
+          <span class="cbadge">merged ${e.confidence}%</span>
+        </div>`).join('') || '<div style="color:var(--muted); font-size:13px;">No matches.</div>'}
+    </div>
+  `;
+  document.getElementById('searchbox').focus();
+  document.getElementById('searchbox').setSelectionRange(query.length, query.length);
+}
+
+function showProfile(id){
+  const e = entities.find(x=>x.id===id);
+  const main = document.getElementById('main');
+  logAudit(`Viewed profile — ${e.name} (${e.id})`);
+
+  const docs = entityDocs[e.id] || [];
+  const rels = entityRels[e.id] || [];
+  const moreDocs = Math.max(0, e.docs - docs.length);
+  const moreRels = Math.max(0, e.rels - rels.length);
+  const ex = e.extra || {};
+  const extraRows = [
+    ['Case ID', ex.caseId], ['Date of birth', ex.dob], ['Gender', ex.gender && ex.gender!=='Not specified' ? ex.gender : ''],
+    ["Father's/mother's name", ex.parent], ['Phone numbers', ex.phones], ['Vehicle numbers', ex.vehicles],
+    ['Bank accounts', ex.accounts], ['Organizations', ex.orgs], ['Languages', ex.langs], ['Address', ex.addr],
+  ].filter(([,v])=>v);
+
+  main.innerHTML = `
+    <span class="backlink" onclick="goto('search')">&larr; Back to search</span>
+    <div class="profile-card">
+      <div class="pname">${e.name} <span class="cbadge">merged ${e.confidence}%</span></div>
+      <div class="alias-row">${e.aliases.map(a=>`<span class="alias">${a}</span>`).join('') || '<span style="color:var(--muted); font-size:11px;">No aliases on file</span>'}</div>
+      <div class="conf-bar"><i style="width:${e.confidence}%"></i></div>
+      ${extraRows.length ? extraRows.map(([k,v])=>`<div class="attr"><span>${k}</span><span class="v">${v}</span></div>`).join('') : ''}
+
+      <div class="section-head" onclick="toggleSection('docs')">
+        <span class="sh-label">Linked documents</span>
+        <span class="sh-right">${e.docs} total <span class="chev" id="sec-docs-chev">&#9656;</span></span>
+      </div>
+      <div class="section-body" id="sec-docs-body">
+        ${docs.map(d=>`
+          <div class="doc-item">
+            <div class="dh"><span class="did">${d.id}</span><span>${d.type} · ${d.date}</span></div>
+            <div class="dx">${d.excerpt}</div>
+          </div>`).join('') || '<div class="empty-ev">No sampled documents in this demo build.</div>'}
+        ${moreDocs>0 ? `<div class="more-note">+${moreDocs} more document${moreDocs===1?'':'s'} in the full case file (not shown in this demo).</div>` : ''}
+      </div>
+
+      <div class="section-head" onclick="toggleSection('rels')">
+        <span class="sh-label">Relationships</span>
+        <span class="sh-right">${e.rels} total <span class="chev" id="sec-rels-chev">&#9656;</span></span>
+      </div>
+      <div class="section-body" id="sec-rels-body">
+        ${rels.map(r=>{
+          const hasEv = r.edgeKey && evidenceByNode[r.edgeKey];
+          return `
+          <div class="rel-item ${r.targetId?'':'unresolved'}">
+            <div class="rel-top">
+              <div>
+                <div class="rel-name">${r.label}</div>
+                <div class="rel-type">${r.type}</div>
+              </div>
+              <div class="rel-actions">
+                <span class="ev-badge ${hasEv?'':'none'}">${hasEv ? evidenceByNode[r.edgeKey].length+' evidence item(s)' : 'unreviewed link'}</span>
+                ${r.targetId ? `<span class="linkbtn" onclick="showProfile('${r.targetId}')">View profile</span>` : ''}
+                ${hasEv ? `<span class="linkbtn" onclick="toggleRelEvidence('${e.id}-${r.edgeKey}')">View evidence</span>` : ''}
+              </div>
+            </div>
+            ${hasEv ? `<div class="rel-evidence section-body" id="rel-ev-${e.id}-${r.edgeKey}">
+              ${evidenceByNode[r.edgeKey].map(it=>`
+                <div class="evsrc">
+                  <div class="doc"><span>${it.doc}</span><span class="cbadge">${it.conf}</span></div>
+                  <div class="excerpt">${it.text}</div>
+                </div>`).join('')}
+              <span class="linkbtn" onclick="jumpToGraphEdge('${e.id}','${r.edgeKey}')">Open in Network Graph &rarr;</span>
+            </div>` : ''}
+          </div>`;
+        }).join('') || '<div class="empty-ev">No sampled relationships in this demo build.</div>'}
+        ${moreRels>0 ? `<div class="more-note">+${moreRels} more relationship${moreRels===1?'':'s'} in the full network (not shown in this demo).</div>` : ''}
+      </div>
+
+      <div class="section-head" onclick="toggleSection('cases')">
+        <span class="sh-label">Linked cases</span>
+        <span class="sh-right">${(entityCases[e.id]||[]).length} total <span class="chev" id="sec-cases-chev">&#9656;</span></span>
+      </div>
+      <div class="section-body" id="sec-cases-body">
+        ${(entityCases[e.id]||[]).length ? `<table>
+          <tr><th>Case</th><th>Role</th><th>Station</th><th>Date</th><th>Sections</th><th>Status</th><th></th></tr>
+          ${entityCases[e.id].map(link=>{
+            const c = caseById(link.caseId);
+            if(!c) return '';
+            const roleCls = link.role.includes('victim')?'victim':link.role.includes('witness')?'witness':'';
+            return `<tr>
+              <td>${c.id}</td>
+              <td><span class="role-tag ${roleCls}">${link.role}</span></td>
+              <td>${c.station}</td>
+              <td>${c.date}</td>
+              <td>${c.sections}</td>
+              <td><span class="status-pill ${c.status}">${c.status==='active'?'Active':'Under review'}</span></td>
+              <td class="rowactions"><span onclick="showCase('${c.id}')">View case</span></td>
+            </tr>`;
+          }).join('')}
+        </table>` : '<div class="empty-ev">No cases linked to this entity in this demo build.</div>'}
+      </div>
+
+      <div class="attr"><span>Source quality</span><span class="v">${e.source}</span></div>
+      <div class="attr"><span>Entity ID</span><span class="v">${e.id}</span></div>
+    </div>
+  `;
+}
+
+function toggleSection(key){
+  document.getElementById(`sec-${key}-body`).classList.toggle('open');
+  document.getElementById(`sec-${key}-chev`).classList.toggle('open');
+}
+
+function toggleRelEvidence(key){
+  const body = document.getElementById(`rel-ev-${key}`);
+  logAudit('Inspected relationship evidence from profile view');
+  body.classList.toggle('open');
+}
+
+function jumpToGraphEdge(entityId, edgeKey){
+  logAudit(`Opened Network Graph from profile — ${entityId}`);
+  goto('graph');
+  const srcNode = entityNodeMap[entityId];
+  if(srcNode) showNodeEvidence(srcNode);
+  showEdgeEvidence(edgeKey);
+}
+
+/* ---------------- GRAPH ---------------- */
+function nodeById(id){ return graphNodes.find(n=>n.id===id); }
+
+let graphFilter = { entityType:'all', evidencedOnly:false };
+
+function renderGraph(main){
+  main.innerHTML = `
+    <div class="pagehead"><div><h2>Network Graph</h2><div class="sub">Click a node or edge to inspect its evidence</div></div></div>
+    <div class="filter-bar">
+      <label>Entity type
+        <select id="filt-type" onchange="graphFilter.entityType=this.value; drawGraph();">
+          <option value="all">All nodes</option>
+          <option value="resolved">Resolved entities only</option>
+          <option value="unresolved">Unresolved contacts only</option>
+        </select>
+      </label>
+      <label><input type="checkbox" id="filt-ev" onchange="graphFilter.evidencedOnly=this.checked; drawGraph();"/> Evidenced links only</label>
+    </div>
+    <div class="graphwrap">
+      <div class="graphpane">
+        <svg viewBox="0 0 340 340" id="graph-svg"></svg>
+      </div>
+      <div class="evpane" id="ev-pane">
+        <h4>Evidence</h4>
+        <div class="empty-ev">Select a node or highlighted edge in the graph to view its supporting evidence.</div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i style="background:#B8874B"></i>evidenced link</span>
+      <span><i style="background:#3A4258"></i>unreviewed link</span>
+      <span><i style="background:#4C8A82"></i>resolved entity</span>
+      <span><i style="background:#6E7280"></i>unresolved contact</span>
+    </div>
+  `;
+  drawGraph();
+}
+
+function nodeVisible(n){
+  if(graphFilter.entityType==='resolved') return !!n.entity;
+  if(graphFilter.entityType==='unresolved') return !n.entity;
+  return true;
+}
+
+function drawGraph(){
+  const svg = document.getElementById('graph-svg');
+  if(!svg) return;
+  let lines = '';
+  graphEdges.forEach(([a,b])=>{
+    const na = nodeById(a), nb = nodeById(b);
+    if(!nodeVisible(na) || !nodeVisible(nb)) return;
+    const key = a+b, key2 = b+a;
+    const isEvidenced = evidenceByNode[key] || evidenceByNode[key2];
+    if(graphFilter.evidencedOnly && !isEvidenced) return;
+    lines += `<line x1="${na.x}" y1="${na.y}" x2="${nb.x}" y2="${nb.y}" stroke="${isEvidenced?'#B8874B':'#3A4258'}" stroke-width="${isEvidenced?2:1.3}" class="gedge" data-key="${key}" style="cursor:${isEvidenced?'pointer':'default'}" ${isEvidenced?`onclick="showEdgeEvidence('${key}')"`:''}/>`;
+  });
+  let nodes = '';
+  graphNodes.filter(nodeVisible).forEach(n=>{
+    nodes += `<g class="gnode ${state.selectedGraphNode===n.id?'selected':''}" onclick="showNodeEvidence('${n.id}')">
+        <circle cx="${n.x}" cy="${n.y}" r="${n.r}" fill="${n.color}"/>
+        <text class="glabel" x="${n.x+12}" y="${n.y+3}">${n.label}</text>
+      </g>`;
+  });
+  svg.innerHTML = lines + nodes;
+}
+
+function showNodeEvidence(id){
+  state.selectedGraphNode = id;
+  drawGraph();
+  const n = nodeById(id);
+  const ev = document.getElementById('ev-pane');
+  if(n.entity){
+    logAudit(`Selected node ${n.label} in graph view`);
+    ev.innerHTML = `<h4>${n.label}</h4>
+      <div class="evsrc"><div class="doc">Entity ID</div><div class="excerpt">${n.entity}</div></div>
+      <div class="evsrc"><div class="doc">Tip</div><div class="excerpt">Click an amber edge connected to this node to see the specific evidence linking it to a neighbor.</div></div>`;
+  } else {
+    ev.innerHTML = `<h4>Unresolved contact</h4><div class="empty-ev">This node has not yet been resolved to a named entity. No profile evidence available.</div>`;
+  }
+}
+
+function showEdgeEvidence(key){
+  const items = evidenceByNode[key] || evidenceByNode[key.split('').reverse().join('')];
+  const ev = document.getElementById('ev-pane');
+  logAudit('Inspected edge evidence in graph view');
+  ev.innerHTML = `<h4>Evidence — selected edge</h4>` + items.map(it=>`
+    <div class="evsrc">
+      <div class="doc"><span>${it.doc}</span><span class="cbadge">${it.conf}</span></div>
+      <div class="excerpt">${it.text}</div>
+    </div>`).join('') + `
+    <div class="legend">
+      <span><i style="background:#B8874B"></i>evidenced link</span>
+      <span><i style="background:#3A4258"></i>unreviewed link</span>
+    </div>`;
+}
+
+/* ---------------- DATA INGESTION (Investigator only) ---------------- */
+let editingEntityId = null;
+
+function renderIngestDenied(main){
+  main.innerHTML = `
+    <div class="pagehead"><div><h2>Data Ingestion</h2><div class="sub">Investigator-only workspace</div></div></div>
+    <div class="access-denied">
+      <div class="ic">&#128274;</div>
+      <h4>Access restricted</h4>
+      <p>Data ingestion is limited to Investigator accounts, so one accountable owner enters case data. Log out and sign back in as an Investigator to add or edit records.</p>
+    </div>
+  `;
+}
+
+function renderIngestion(main){
+  const editing = editingEntityId ? entities.find(x=>x.id===editingEntityId) : null;
+  const ex = editing ? (editing.extra || {}) : {};
+  main.innerHTML = `
+    <div class="pagehead">
+      <div><h2>Data Ingestion</h2><div class="sub">Investigator-only · entities added here flow straight into Search, Profile and the Network Graph</div></div>
+      <div class="role-pill">Investigator access</div>
+    </div>
+    <div class="card">
+      <h4>${editing ? `Edit entity — ${editing.name}` : 'Entity Registration'} <span class="save-toast" id="ingest-toast">Saved.</span></h4>
+      <div class="ingest-form" id="ingest-form">
+        <div><label>Full Name *</label><input id="f-name" value="${editing?editing.name:''}" placeholder="e.g. Anita Rao"/></div>
+        <div><label>Aliases (comma-separated)</label><input id="f-aliases" value="${editing?editing.aliases.join(', '):''}" placeholder="e.g. A. Rao, Anu"/></div>
+        <div><label>Father's / Mother's Name</label><input id="f-parent" value="${ex.parent||''}"/></div>
+        <div><label>Date of Birth</label><input id="f-dob" type="date" value="${ex.dob||''}"/></div>
+        <div><label>Gender</label>
+          <select id="f-gender">
+            <option ${!ex.gender||ex.gender==='Not specified'?'selected':''}>Not specified</option>
+            <option ${ex.gender==='Male'?'selected':''}>Male</option>
+            <option ${ex.gender==='Female'?'selected':''}>Female</option>
+            <option ${ex.gender==='Other'?'selected':''}>Other</option>
+          </select>
+        </div>
+        <div><label>Case ID</label><input id="f-case" value="${ex.caseId||'CASE-0091'}"/></div>
+        <div><label>Phone Numbers (comma-separated)</label><input id="f-phones" value="${ex.phones||''}"/></div>
+        <div><label>Vehicle Numbers (comma-separated)</label><input id="f-vehicles" value="${ex.vehicles||''}"/></div>
+        <div><label>Bank Accounts (comma-separated)</label><input id="f-accounts" value="${ex.accounts||''}"/></div>
+        <div><label>Organizations (comma-separated)</label><input id="f-orgs" value="${ex.orgs||''}"/></div>
+        <div><label>Languages (comma-separated)</label><input id="f-langs" value="${ex.langs||''}"/></div>
+        <div><label>Source quality</label><input id="f-source" value="${editing?editing.source:'Manual entry'}"/></div>
+        <div class="full"><label>Addresses</label><textarea id="f-addr">${ex.addr||''}</textarea></div>
+        <div class="full">
+          <label>Merge / extraction confidence — <span id="conf-readout">${editing?editing.confidence:70}%</span></label>
+          <input id="f-conf" type="range" min="0" max="100" value="${editing?editing.confidence:70}" oninput="document.getElementById('conf-readout').textContent=this.value+'%'"/>
+        </div>
+      </div>
+      <div class="ingest-actions">
+        <button class="btn" onclick="saveEntityRecord()">${editing?'Save changes':'Add Record'}</button>
+        <button class="btn ghost" onclick="clearIngestForm()">Clear Form</button>
+        ${editing ? `<button class="btn ghost" onclick="clearIngestForm()">Cancel edit</button>` : ''}
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Registered entities (${entities.length})</h4>
+      <table>
+        <tr><th>Name</th><th>Entity ID</th><th>Aliases</th><th>Case</th><th>Confidence</th><th>Source</th><th></th></tr>
+        ${entities.map(e=>`
+          <tr>
+            <td>${e.name}</td>
+            <td>${e.id}</td>
+            <td>${e.aliases.join(', ')||'—'}</td>
+            <td>${(e.extra&&e.extra.caseId)||'—'}</td>
+            <td><span class="sev ${e.confidence>=75?'high':e.confidence>=50?'med':'low'}">${e.confidence}%</span></td>
+            <td>${e.source}</td>
+            <td class="rowactions">
+              <span onclick="editEntityRecord('${e.id}')">Edit</span>
+              <span class="del" onclick="deleteEntityRecord('${e.id}')">Delete</span>
+            </td>
+          </tr>`).join('')}
+      </table>
+    </div>
+  `;
+}
+
+function nextEntityId(){
+  const nums = entities.map(e=>parseInt(e.id.replace('E-',''),10)).filter(n=>!isNaN(n));
+  const next = (nums.length?Math.max(...nums):0) + 1;
+  return 'E-' + String(next).padStart(4,'0');
+}
+
+function readIngestForm(){
+  const val = id => document.getElementById(id).value.trim();
+  const splitList = s => s.split(',').map(x=>x.trim()).filter(Boolean);
+  return {
+    name: val('f-name'),
+    aliases: splitList(val('f-aliases')),
+    source: val('f-source') || 'Manual entry',
+    confidence: parseInt(document.getElementById('f-conf').value, 10),
+    extra: {
+      parent: val('f-parent'),
+      dob: val('f-dob'),
+      gender: document.getElementById('f-gender').value,
+      caseId: val('f-case') || 'CASE-0091',
+      phones: val('f-phones'),
+      vehicles: val('f-vehicles'),
+      accounts: val('f-accounts'),
+      orgs: val('f-orgs'),
+      langs: val('f-langs'),
+      addr: document.getElementById('f-addr').value.trim(),
+    }
+  };
+}
+
+function saveEntityRecord(){
+  const data = readIngestForm();
+  if(!data.name){
+    alert('Full Name is required.');
+    return;
+  }
+  if(editingEntityId){
+    const e = entities.find(x=>x.id===editingEntityId);
+    Object.assign(e, { name:data.name, aliases:data.aliases, source:data.source, confidence:data.confidence, extra:data.extra });
+    logAudit(`Record edited — Entity ${e.name} (${e.id})`);
+    editingEntityId = null;
+  } else {
+    const id = nextEntityId();
+    entities.push({ id, name:data.name, aliases:data.aliases, confidence:data.confidence, docs:0, rels:0, source:data.source, extra:data.extra });
+    logAudit(`Record created — Entity ${data.name} (${id})`);
+  }
+  renderIngestion(document.getElementById('main'));
+  const toast = document.getElementById('ingest-toast');
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'), 1800);
+}
+
+function clearIngestForm(){
+  editingEntityId = null;
+  renderIngestion(document.getElementById('main'));
+}
+
+function editEntityRecord(id){
+  editingEntityId = id;
+  renderIngestion(document.getElementById('main'));
+}
+
+function deleteEntityRecord(id){
+  const e = entities.find(x=>x.id===id);
+  if(!e) return;
+  if(!confirm(`Delete entity ${e.name} (${e.id})? This cannot be undone.`)) return;
+  entities.splice(entities.indexOf(e), 1);
+  delete entityDocs[id];
+  delete entityRels[id];
+  logAudit(`Record deleted — Entity ${e.name} (${id})`);
+  if(editingEntityId===id) editingEntityId = null;
+  renderIngestion(document.getElementById('main'));
+}
+
+/* ---------------- ALERTS ---------------- */
+function renderAlerts(main){
+  main.innerHTML = `
+    <div class="pagehead"><div><h2>Alert Review</h2><div class="sub">Every alert ships with plain-language reasoning and its evidence chain</div></div></div>
+    ${alerts.map(a=>`
+      <div class="alert-card ${a.status?'resolved':''}">
+        <div class="kind">${a.kind} ${a.status?`<span class="status-tag ${a.status}">${a.status}</span>`:''}</div>
+        <p>${a.text}</p>
+        <div class="chips">${a.chips.map(c=>`<span class="chip">${c}</span>`).join('')}</div>
+        <div class="chips">
+          <span class="linkbtn" onclick="showProfile('${a.entity}')">View person</span>
+          ${entityCases[a.entity] ? entityCases[a.entity].map(l=>`<span class="linkbtn" onclick="showCase('${l.caseId}')">View ${l.caseId}</span>`).join('') : ''}
+          <span class="linkbtn" onclick="goto('graph')">View network</span>
+        </div>
+        <div class="rowbtns">
+          <button class="rb accept" ${a.status?'disabled':''} onclick="resolveAlert('${a.id}','accepted')">Accept lead</button>
+          <button class="rb" ${a.status?'disabled':''} onclick="resolveAlert('${a.id}','rejected')">Reject</button>
+        </div>
+      </div>
+    `).join('')}
+  `;
+}
+function resolveAlert(id, status){
+  const a = alerts.find(x=>x.id===id);
+  a.status = status;
+  logAudit(`Alert ${status} — ${a.kind} (${a.entity})`);
+  renderAlerts(document.getElementById('main'));
+}
+
+/* ---------------- AUDIT ---------------- */
+function renderAudit(main){
+  main.innerHTML = `
+    <div class="pagehead"><div><h2>Case Workspace / Audit Log</h2><div class="sub">Immutable, hash-chained record of every action taken on this case</div></div></div>
+    <div class="card">
+      <h4>Case #0091 — notes</h4>
+      <div style="font-size:12.5px; color:var(--muted); line-height:1.6;">
+        Investigating suspected coordination between two previously unconnected groups following a shared-address match and a burst of calls in mid-August. Bridge-node alert (E-1042) accepted for follow-up; alias-reuse alert pending review.
+      </div>
+    </div>
+    <div class="card">
+      <h4>Audit trail</h4>
+      ${auditLog.map((l,i)=>`<div class="logrow"><span>${l.text}</span><span class="who">${l.who}</span><span class="hash">${hashFor(i)}</span></div>`).join('')}
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
